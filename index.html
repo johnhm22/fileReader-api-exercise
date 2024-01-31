@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FileReader practice</title>
   </head>
+  <script src="https://unpkg.com/prettier@2.6.2/standalone.js"></script>
+  <script src="https://unpkg.com/prettier@2.6.2/parser-html.js"></script>
   <body>
     <input type="file" />
 
-    <div id="preview">Preview</div>
+    <p>Preview</p>
+    <div id="preview"></div>
   </body>
   <script>
     const fileInput = document.querySelector('input');
@@ -18,7 +21,44 @@
       const reader = new FileReader();
       reader.readAsText(fileInput.files[0]);
       reader.addEventListener('load', () => {
-        preview.textContent = reader.result;
+        const csv = reader.result;
+        //split csv so each line is in its own array
+        const array = csv.split('\r\n').map((line) => {
+          // \r\n is windows specific, mac may differ
+          return line.split(',');
+        });
+        console.log(array);
+
+        const table = document.createElement('table');
+
+        array.forEach((line, idx) => {
+          const tr = document.createElement('tr');
+          line.forEach((cell) => {
+            let td;
+            if (idx === 0) {
+              td = document.createElement('th');
+            } else {
+              td = document.createElement('td');
+            }
+            td.textContent = cell;
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        });
+        preview.appendChild(table);
+
+        const pre = document.createElement('pre');
+        const code = document.createElement('code');
+        pre.appendChild(code);
+
+        const html = preview.innerHTML;
+
+        const formatted = prettier.format(html, {
+          parser: 'html',
+          plugins: prettierPlugins,
+        });
+        document.body.appendChild(pre);
+        code.innerText = formatted;
       });
     });
   </script>
