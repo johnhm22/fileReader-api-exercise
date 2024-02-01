@@ -19,46 +19,28 @@
 
     fileInput.addEventListener('change', () => {
       const reader = new FileReader();
-      reader.readAsText(fileInput.files[0]);
+      reader.readAsDataURL(fileInput.files[0]);
       reader.addEventListener('load', () => {
-        const csv = reader.result;
-        //split csv so each line is in its own array
-        const array = csv.split('\r\n').map((line) => {
-          // \r\n is windows specific, mac may differ
-          return line.split(',');
-        });
-        console.log(array);
+        //create data url to represent image to be used for src of img tag
+        const url = reader.result;
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          preview.appendChild(canvas);
 
-        const table = document.createElement('table');
-
-        array.forEach((line, idx) => {
-          const tr = document.createElement('tr');
-          line.forEach((cell) => {
-            let td;
-            if (idx === 0) {
-              td = document.createElement('th');
-            } else {
-              td = document.createElement('td');
-            }
-            td.textContent = cell;
-            tr.appendChild(td);
+          //uploading image to external location
+          canvas.toBlob((blob) => {
+            const formData = new FormData();
+            formData.append('img', blob, 'myImage.jpg');
+            //send a POST fetch request to a defined url for example in cloudinary with
+            //formData as the body
           });
-          table.appendChild(tr);
-        });
-        preview.appendChild(table);
-
-        const pre = document.createElement('pre');
-        const code = document.createElement('code');
-        pre.appendChild(code);
-
-        const html = preview.innerHTML;
-
-        const formatted = prettier.format(html, {
-          parser: 'html',
-          plugins: prettierPlugins,
-        });
-        document.body.appendChild(pre);
-        code.innerText = formatted;
+        };
       });
     });
   </script>
